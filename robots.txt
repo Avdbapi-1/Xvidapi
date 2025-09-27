@@ -1,0 +1,20 @@
+User-agent: *
+Disallow: /assets/             # Static assets, typically no need to index
+Disallow: /cache/              # Cached files, not for indexing
+Disallow: /sources/            # Internal resources, not user-facing
+Disallow: /api/                # API endpoints, not for search engines
+Disallow: /script_backups/     # Backup files, confidential
+Disallow: /updates/            # System updates, irrelevant for SEO
+Disallow: /install/            # Installation files, internal
+Disallow: /admincp/            # Admin panel, restricted area
+Disallow: /admin-panel/        # Another admin area, restricted
+Disallow: /embed/              # Embeds may lead to duplicate content
+Disallow: /nodejs/             # Node.js backend, irrelevant for indexing
+
+# Allow important sections for faster indexing
+Allow: /                      # Ensure home page and primary sections are accessible
+Allow: /content/              # Key content folder, adjust based on your site structure
+Allow: /images/               # Image indexing for better visibility
+
+# Sitemap for search engines
+Sitemap: https://whatsohot.com/sitemap-main.xml

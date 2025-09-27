@@ -1,0 +1,814 @@
+<div class="container-fluid">
+    <div>
+        <h3>Import AVDB API</h3>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="#">Admin Panel</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">AVDBAPI</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="row">
+        <div class="col-lg-12 col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Import API Data</h6>
+                    <form id="import-api" class="mb-3">
+                        <div class="form-group">
+                            <label for="api-url">API URL</label>
+                            <input type="text" class="form-control" id="api-url"
+                                value="https://avdbapi.com/api.php/provide/vod/?ac=detail&pg="
+                                placeholder="Enter API URL">
+                        </div>
+                        <div class="form-group">
+                            <label for="page-from">Page From</label>
+                            <input type="number" class="form-control" id="page-from" placeholder="1" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="page-to">Page To</label>
+                            <input type="number" class="form-control" id="page-to" placeholder="n" value="2">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label for="max-items">Max Items To Import</label>
+                                <input type="number" min="0" class="form-control" id="max-items" placeholder="0 = unlimited" value="0">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="concurrency">Concurrent Imports</label>
+                                <input type="number" min="1" max="100" class="form-control" id="concurrency" placeholder="e.g. 3" value="3">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="rate-delay">Delay Between Requests (ms)</label>
+                                <input type="number" min="0" class="form-control" id="rate-delay" placeholder="0" value="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label for="download-images">Download Images to Local</label>
+                                <select id="download-images" class="form-control">
+                                    <option value="off">Off (Use API URLs)</option>
+                                    <option value="on">On (Download to Local)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary waves-effect waves-light m-t-20">Start
+                            Import</button>
+                        <button type="button" id="pause-resume-btn"
+                            class="btn btn-secondary waves-effect waves-light m-t-20">Pause</button>
+                    </form>
+                    
+                    <!-- Individual Video Import Section -->
+                    <div class="mt-4">
+                        <h6 class="card-title">Import Individual Videos</h6>
+                        <form id="import-individual" class="mb-3">
+                            <div class="form-group">
+                                <label for="individual-urls">AVDB API URLs (One per line)</label>
+                                <textarea class="form-control" id="individual-urls" rows="5" 
+                                    placeholder="https://avdbapi.com/api.php/provide/vod?ac=detail&ids=477073&#10;https://avdbapi.com/api.php/provide/vod?ac=detail&ids=477074&#10;https://avdbapi.com/api.php/provide/vod?ac=detail&ids=477075"></textarea>
+                                <small class="form-text text-muted">
+                                    Enter one AVDB API URL per line. Each URL should contain <code>ac=detail&ids=</code> parameter.
+                                </small>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-4">
+                                    <label for="individual-download-images">Download Images to Local</label>
+                                    <select id="individual-download-images" class="form-control">
+                                        <option value="off">Off (Use API URLs)</option>
+                                        <option value="on">On (Download to Local)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label for="individual-concurrency">Concurrent Imports</label>
+                                    <input type="number" min="1" max="10" class="form-control" id="individual-concurrency" placeholder="3" value="3">
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label for="individual-delay">Delay Between Requests (ms)</label>
+                                    <input type="number" min="0" class="form-control" id="individual-delay" placeholder="1000" value="1000">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-success waves-effect waves-light">Import Individual Videos</button>
+                            <button type="button" id="pause-individual-btn" class="btn btn-warning waves-effect waves-light">Pause Individual</button>
+                        </form>
+                    </div>
+                    
+                    <p><b>Status:</b> <span id="status-info">Waiting to start...</span></p>
+                    
+                    <!-- Import Results with 4 Status Boxes -->
+                    <div class="row mt-3">
+                        <!-- URL Importing -->
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title">URL Importing</h6>
+                                    <div class="url-list" id="url-importing" style="max-height: 300px; overflow-y: auto; font-size: 12px;">
+                                        <div class="text-center" style="color: rgba(255,255,255,0.9);">No URLs being imported</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- URL Imported -->
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title">URL Imported</h6>
+                                    <div class="url-list" id="url-imported" style="max-height: 300px; overflow-y: auto; font-size: 12px;">
+                                        <div class="text-center" style="color: rgba(255,255,255,0.9);">No URLs imported yet</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- URL Skipped -->
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title">URL Skipped</h6>
+                                    <div class="url-list" id="url-skipped" style="max-height: 300px; overflow-y: auto; font-size: 12px;">
+                                        <div class="text-center" style="color: rgba(255,255,255,0.9);">No URLs skipped yet</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- URL Error -->
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="card bg-danger text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title">URL Error</h6>
+                                    <div class="url-list" id="url-error" style="max-height: 300px; overflow-y: auto; font-size: 12px;">
+                                        <div class="text-center" style="color: rgba(255,255,255,0.9);">No errors yet</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-12 col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Cron Settings</h6>
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label>Enable Cron</label>
+                            <select id="cron-enable" class="form-control">
+                                <option value="off">Off</option>
+                                <option value="on">On</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Cron Secret</label>
+                            <input type="text" class="form-control" id="cron-secret" placeholder="random secret">
+                            <small class="form-text text-muted">Keep this secret safe. URL: <code id="cron-url"></code></small>
+                            <div id="cron-howto" class="mt-2" style="font-size:12px;color:#aaa;"></div>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Min Interval (sec)</label>
+                            <input type="number" min="0" class="form-control" id="cron-min-interval" value="300">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label>Page From</label>
+                            <input type="number" id="cron-page-from" class="form-control" value="1">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Page To</label>
+                            <input type="number" id="cron-page-to" class="form-control" value="100">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Next Page</label>
+                            <input type="number" id="cron-next-page" class="form-control" value="1">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Items per run</label>
+                            <input type="number" min="1" id="cron-items-per-run" class="form-control" value="25">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label>Owner User ID</label>
+                            <input type="number" min="1" id="cron-owner-id" class="form-control" value="1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label>Request Delay (ms)</label>
+                            <input type="number" min="0" id="cron-delay" class="form-control" value="0">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Max Load</label>
+                            <input type="number" min="0" step="0.1" id="cron-max-load" class="form-control" value="6">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Lock TTL (sec)</label>
+                            <input type="number" min="0" id="cron-lock-ttl" class="form-control" value="600">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>API URL Template</label>
+                            <input type="text" id="cron-api-url" class="form-control" value="https://avdbapi.com/api.php/provide/vod/?ac=detail&pg=">
+                        </div>
+                    </div>
+                    <button id="save-cron" class="btn btn-primary">Save Cron Settings</button>
+                    <button id="run-cron" class="btn btn-outline-primary">Run Now</button>
+                    <span id="cron-status" class="ml-2 text-muted"></span>
+                </div>
+            </div>
+        </div>
+        <div class="clearfix"></div>
+    </div>
+</div>
+<script>
+    $(function () {
+        let isPaused = false;  // Track the pause state
+        let currentPage = 1;   // Current page tracker
+        let totalPage;         // Total pages to import
+        let apiUrl;           // API URL to be used
+        let currentItemIndex = 0; // Index for the current item to import
+        let currentItems = []; // Array to store items to import from the current page
+        let maxItems = 0;      // Stop after importing N items (0 = unlimited)
+        let importedTotal = 0; // Total imported so far
+        let concurrency = 3;   // Number of concurrent imports
+        let inFlight = 0;      // Current parallel in-flight requests
+        let rateDelay = 0;     // Optional delay between dispatching imports
+
+        // Prefill from localStorage (except downloadImages which always defaults to 'off')
+        try {
+            const s = JSON.parse(localStorage.getItem('avdbapi_import_settings') || '{}');
+            if (s.apiUrl) $('#api-url').val(s.apiUrl);
+            if (s.pageFrom) $('#page-from').val(s.pageFrom);
+            if (s.pageTo) $('#page-to').val(s.pageTo);
+            if (s.maxItems != null) $('#max-items').val(s.maxItems);
+            if (s.concurrency != null) $('#concurrency').val(s.concurrency);
+            if (s.rateDelay != null) $('#rate-delay').val(s.rateDelay);
+            // Always default to 'off' for download images
+            $('#download-images').val('off');
+        } catch (e) {}
+
+        // Enforce 1..100 immediately on the field
+        function clampConcurrencyField() {
+            let v = parseInt($('#concurrency').val() || '1');
+            if (isNaN(v)) v = 1;
+            v = Math.max(1, Math.min(100, v));
+            $('#concurrency').val(v);
+        }
+        $('#concurrency').on('input change', clampConcurrencyField);
+        clampConcurrencyField();
+
+        // Handle form submission
+        $('#import-api').submit(function (e) {
+            e.preventDefault();
+            apiUrl = $('#api-url').val();
+            currentPage = parseInt($('#page-from').val());
+            totalPage = parseInt($('#page-to').val());
+            maxItems = parseInt($('#max-items').val() || '0');
+            // Bound concurrency between 1 and 100 to avoid overwhelming the server/browser
+            concurrency = Math.min(100, Math.max(1, parseInt($('#concurrency').val() || '3')));
+            rateDelay = Math.max(0, parseInt($('#rate-delay').val() || '0'));
+            downloadImages = $('#download-images').val() === 'on';
+            importedTotal = 0;
+            inFlight = 0;
+            currentItems = [];
+            currentItemIndex = 0;
+
+            // Save (don't save downloadImages as it always defaults to 'off')
+            try {
+                localStorage.setItem('avdbapi_import_settings', JSON.stringify({
+                    apiUrl, pageFrom: currentPage, pageTo: totalPage, maxItems, concurrency, rateDelay
+                }));
+            } catch (e) {}
+
+            if (!apiUrl || !currentPage || !totalPage || currentPage > totalPage) {
+                alert("Please enter a valid API URL and page range.");
+                return;
+            }
+
+            // Disable start button during import
+            $('#import-api button[type=submit]').attr('disabled', true);
+
+            // Initialize import process
+            importData(apiUrl, currentPage);
+            
+            // Scroll to status area
+            setTimeout(() => {
+                $('#url-importing')[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        });
+
+        $('#pause-resume-btn').click(function () {
+            isPaused = !isPaused;  // Toggle pause state
+            $(this).text(isPaused ? 'Resume' : 'Pause');  // Update button text
+            if (!isPaused && (currentItems.length > 0 || inFlight > 0)) {
+                pumpQueue();  // Resume importing
+            }
+        });
+
+        // Individual video import variables
+        let individualIsPaused = false;
+        let individualUrls = [];
+        let individualCurrentIndex = 0;
+        let individualInFlight = 0;
+        let individualImported = 0;
+        let individualErrors = 0;
+        let individualSkipped = 0;
+        let individualUpdated = 0;
+
+        // Handle individual video import form submission
+        $('#import-individual').submit(function (e) {
+            e.preventDefault();
+            
+            const urlsText = $('#individual-urls').val().trim();
+            if (!urlsText) {
+                alert("Please enter at least one AVDB API URL.");
+                return;
+            }
+
+            // Parse URLs and validate
+            individualUrls = urlsText.split('\n')
+                .map(url => url.trim())
+                .filter(url => url && url.includes('avdbapi.com') && url.includes('ac=detail&ids='));
+            
+            if (individualUrls.length === 0) {
+                alert("Please enter valid AVDB API URLs containing 'ac=detail&ids=' parameter.");
+                return;
+            }
+
+            const individualConcurrency = Math.min(10, Math.max(1, parseInt($('#individual-concurrency').val() || '3')));
+            const individualDelay = Math.max(0, parseInt($('#individual-delay').val() || '1000'));
+            const individualDownloadImages = $('#individual-download-images').val() === 'on';
+
+            // Reset counters
+            individualCurrentIndex = 0;
+            individualInFlight = 0;
+            individualImported = 0;
+            individualErrors = 0;
+            individualSkipped = 0;
+            individualUpdated = 0;
+            individualIsPaused = false;
+
+            // Clear status boxes
+            $('#url-importing').html('');
+            $('#url-imported').html('');
+            $('#url-skipped').html('');
+            $('#url-error').html('');
+
+            // Disable form during import
+            $('#import-individual button[type=submit]').attr('disabled', true);
+            $('#pause-individual-btn').text('Pause Individual').removeClass('btn-success').addClass('btn-warning');
+
+            // Start individual import process
+            startIndividualImport(individualConcurrency, individualDelay, individualDownloadImages);
+            
+            // Scroll to status area
+            setTimeout(() => {
+                $('#url-importing')[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        });
+
+        // Individual import pause/resume
+        $('#pause-individual-btn').click(function () {
+            individualIsPaused = !individualIsPaused;
+            $(this).text(individualIsPaused ? 'Resume Individual' : 'Pause Individual');
+            $(this).removeClass('btn-warning btn-success').addClass(individualIsPaused ? 'btn-success' : 'btn-warning');
+        });
+
+        // Start individual import process
+        function startIndividualImport(concurrency, delay, downloadImages) {
+            function processNext() {
+                if (individualIsPaused || individualCurrentIndex >= individualUrls.length) {
+                    if (individualCurrentIndex >= individualUrls.length && individualInFlight === 0) {
+                        // Import completed
+                        $('#import-individual button[type=submit]').attr('disabled', false);
+                        $('#status-info').text(`Individual import completed. Imported: ${individualImported}, Updated: ${individualUpdated}, Skipped: ${individualSkipped}, Errors: ${individualErrors}`);
+                    }
+                    return;
+                }
+
+                if (individualInFlight >= concurrency) {
+                    return; // Wait for current requests to complete
+                }
+
+                const currentUrl = individualUrls[individualCurrentIndex];
+                individualCurrentIndex++;
+                individualInFlight++;
+
+                // Add to importing list
+                addToStatusList('url-importing', currentUrl, 'importing');
+
+                // Process the URL
+                importIndividualVideo(currentUrl, downloadImages)
+                    .then(result => {
+                        individualInFlight--;
+                        
+                        // Remove from importing list
+                        removeFromStatusList('url-importing', currentUrl);
+                        
+                        if (result.success) {
+                            if (result.updated) {
+                                individualUpdated++;
+                                addToStatusList('url-imported', currentUrl, 'updated');
+                            } else if (result.skipped) {
+                                individualSkipped++;
+                                addToStatusList('url-skipped', currentUrl, 'skipped');
+                            } else {
+                                individualImported++;
+                                addToStatusList('url-imported', currentUrl, 'imported');
+                            }
+                        } else {
+                            individualErrors++;
+                            addToStatusList('url-error', currentUrl, 'error', result.error);
+                        }
+
+                        // Continue with next URL
+                        if (delay > 0) {
+                            setTimeout(() => processNext(), delay);
+                        } else {
+                            processNext();
+                        }
+                    })
+                    .catch(error => {
+                        individualInFlight--;
+                        individualErrors++;
+                        
+                        removeFromStatusList('url-importing', currentUrl);
+                        addToStatusList('url-error', currentUrl, 'error', error.message || 'Unknown error');
+                        
+                        if (delay > 0) {
+                            setTimeout(() => processNext(), delay);
+                        } else {
+                            processNext();
+                        }
+                    });
+            }
+
+            // Start processing
+            for (let i = 0; i < concurrency; i++) {
+                processNext();
+            }
+        }
+
+        // Import individual video
+        async function importIndividualVideo(apiUrl, downloadImages) {
+            try {
+                // First, fetch the video data from API
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                if (!data || data.code !== 1 || !data.list || data.list.length === 0) {
+                    throw new Error('Invalid API response or no data found');
+                }
+
+                const videoData = data.list[0];
+                
+                // Prepare form data for import
+                const formData = new FormData();
+                formData.append('item', JSON.stringify(videoData));
+                formData.append('download_images', downloadImages ? 'on' : 'off');
+
+                // Import via our API
+                const importResponse = await fetch('/aj/ap/import-avdb-item', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const importResult = await importResponse.json();
+                
+                if (!importResponse.ok || !importResult || importResult.status !== 200) {
+                    throw new Error(importResult?.message || `Import failed: ${importResponse.statusText}`);
+                }
+
+                return {
+                    success: true,
+                    updated: importResult.updated || false,
+                    skipped: importResult.skipped || false,
+                    imported: importResult.inserted || false
+                };
+
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message || 'Unknown error'
+                };
+            }
+        }
+
+        // Helper functions for status lists
+        function addToStatusList(listId, url, type, message = '') {
+            const list = $('#' + listId);
+            const id = 'item-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            const displayUrl = url.length > 60 ? url.substring(0, 60) + '...' : url;
+            
+            let badgeClass = 'badge-secondary';
+            let badgeText = type;
+            
+            if (type === 'imported') badgeClass = 'badge-success';
+            else if (type === 'updated') badgeClass = 'badge-info';
+            else if (type === 'skipped') badgeClass = 'badge-warning';
+            else if (type === 'error') badgeClass = 'badge-danger';
+            else if (type === 'importing') badgeClass = 'badge-primary';
+
+            const item = $(`
+                <div class="mb-1" id="${id}">
+                    <span class="badge ${badgeClass} badge-sm">${badgeText}</span>
+                    <small class="d-block text-truncate" style="color: white !important;" title="${url}">${displayUrl}</small>
+                    ${message ? `<small style="color: rgba(255,255,255,0.8) !important;">${message}</small>` : ''}
+                </div>
+            `);
+            
+            list.append(item);
+            
+            // Auto-remove importing items after 30 seconds
+            if (type === 'importing') {
+                setTimeout(() => removeFromStatusList(listId, id), 30000);
+            }
+        }
+
+        function removeFromStatusList(listId, urlOrId) {
+            const list = $('#' + listId);
+            if (urlOrId.startsWith('item-')) {
+                list.find('#' + urlOrId).remove();
+            } else {
+                list.find(`[title="${urlOrId}"]`).parent().remove();
+            }
+        }
+
+        function importData(apiUrl, page) {
+            $('#status-info').text(`Processing page ${page}/${totalPage}`);
+
+            // Fetch data from API
+            $.post('/aj/ap/load-items-from-avdbapi', { currentPage: page, apiUrl: apiUrl }, function (data) {
+                if (data.status === 200 && data.items.length > 0) {
+                    currentItems = data.items; // Store items from the current page
+                    currentItemIndex = 0; // Reset index to start importing from the first item
+
+                    // Clear previous results
+                    $('#url-importing').html('<div class="text-center text-muted">No URLs being imported</div>');
+                    $('#url-imported').html('<div class="text-center text-muted">No URLs imported yet</div>');
+                    $('#url-skipped').html('<div class="text-center text-muted">No URLs skipped yet</div>');
+                    $('#url-error').html('<div class="text-center text-muted">No errors yet</div>');
+
+                    pumpQueue(); // Start importing
+                } else {
+                    $('#status-info').text(`Error: ${data.msg}`);
+                }
+            }).fail(function () {
+                $('#status-info').text('Failed to fetch data.');
+            });
+        }
+
+        // Dispatch up to N concurrent imports
+        function pumpQueue() {
+            if (isPaused) return;
+            // Stop if reached max
+            if (maxItems > 0 && importedTotal >= maxItems) {
+                finishOrNextPage();
+                return;
+            }
+            // Refill workers
+            while (!isPaused && inFlight < concurrency && currentItemIndex < currentItems.length) {
+                const item = currentItems[currentItemIndex++];
+                inFlight++;
+                const startOne = () => {
+                    importItem(item, function (status) {
+                        inFlight--;
+                        importedTotal++;
+                        if (!isPaused) pumpQueue();
+                    }, function () {
+                        inFlight--;
+                        importedTotal++;
+                        if (!isPaused) pumpQueue();
+                    });
+                };
+                if (rateDelay > 0) {
+                    setTimeout(startOne, rateDelay);
+                } else {
+                    startOne();
+                }
+            }
+            // If no more items in this page and nothing in flight, move on
+            if (currentItemIndex >= currentItems.length && inFlight === 0) {
+                finishOrNextPage();
+            }
+        }
+
+        function finishOrNextPage() {
+            if (maxItems > 0 && importedTotal >= maxItems) {
+                $('#status-info').text(`Reached limit (${importedTotal}/${maxItems}). Done.`);
+                $('#import-api button[type=submit]').attr('disabled', false);
+                return;
+            }
+            if (currentPage < totalPage) {
+                currentPage++;
+                importData(apiUrl, currentPage);
+            } else {
+                $('#status-info').text('All pages processed.');
+                $('#import-api button[type=submit]').attr('disabled', false);
+            }
+        }
+
+
+        async function importItem(item, onSuccess, onError) {
+            const enrichedData = {
+                ...item,
+                hash: '<?php echo PT_CreateMainSession(); ?>',
+                download_images: downloadImages
+            };
+
+            // Add to importing list
+            addToUrlList('url-importing', item.id, item.name);
+
+            try {
+                const result = await importItemServer(enrichedData);
+                if (result && result.status === 200) {
+                    // Remove from importing list
+                    removeFromUrlList('url-importing', item.id);
+                    
+                    if (result.skipped) {
+                        // Video was skipped (no changes)
+                        addToUrlList('url-skipped', item.id, item.name);
+                        onSuccess('skipped');
+                    } else {
+                        // Video was imported or updated
+                        addToUrlList('url-imported', item.id, item.name);
+                        onSuccess('imported');
+                    }
+                } else {
+                    console.warn('Import failed payload:', result);
+                    removeFromUrlList('url-importing', item.id);
+                    addToUrlList('url-error', item.id, item.name, result.message || 'Import failed');
+                    onError();
+                }
+                return result;
+            } catch (error) {
+                console.error('Video import failed:', error);
+                removeFromUrlList('url-importing', item.id);
+                addToUrlList('url-error', item.id, item.name, error.message || 'Import error');
+                onError();
+            }
+        }
+        // Helper functions for URL list management
+        function addToUrlList(listId, id, title, error = '') {
+            const list = $(`#${listId}`);
+            const existing = list.find(`[data-id="${id}"]`);
+            
+            if (existing.length > 0) {
+                existing.remove();
+            }
+            
+            // Remove "No URLs" message if exists
+            list.find('.text-center.text-muted').remove();
+            
+            const itemHtml = `
+                <div class="url-item mb-1 p-1 border-bottom" data-id="${id}" style="font-size: 11px;">
+                    <div class="fw-bold" style="color: white !important;">ID: ${id}</div>
+                    <div class="text-truncate" style="color: white !important;" title="${title}">${title}</div>
+                    ${error ? `<div class="text-danger" style="color: #ff6b6b !important;">${error}</div>` : ''}
+                </div>
+            `;
+            
+            list.append(itemHtml);
+            
+            // Auto-scroll to bottom
+            list.scrollTop(list[0].scrollHeight);
+        }
+        
+        function removeFromUrlList(listId, id) {
+            $(`#${listId} [data-id="${id}"]`).remove();
+            
+            // Show "No URLs" message if list is empty
+            const list = $(`#${listId}`);
+            if (list.children().length === 0) {
+                const message = listId === 'url-importing' ? 'No URLs being imported' :
+                              listId === 'url-imported' ? 'No URLs imported yet' :
+                              listId === 'url-skipped' ? 'No URLs skipped yet' : 'No errors yet';
+                list.html(`<div class="text-center text-muted">${message}</div>`);
+            }
+        }
+
+        async function fetchImageAsFile(imageUrl, fileName) {
+            try {
+                const response = await fetch(imageUrl);
+                if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
+
+                const blob = await response.blob();
+                return new File([blob], fileName, { type: blob.type });
+            } catch (error) {
+                console.error('Error fetching image:', error);
+                throw error;
+            }
+        }
+
+        async function importItemData(videoData) {
+            // fallback not used
+            throw new Error('Use server import');
+        }
+
+        async function importItemServer(videoData) {
+            const form = new FormData();
+            form.append('item', JSON.stringify(videoData));
+            form.append('download_images', videoData.download_images ? 'on' : 'off');
+            const res = await fetch('/aj/ap/import-avdb-item', { method: 'POST', body: form });
+            const json = await res.json();
+            if (!res.ok || !json || json.status !== 200) {
+                throw new Error(json && json.message ? json.message : `Import failed: ${res.statusText}`);
+            }
+            return json;
+        }
+
+        // --------------- Cron settings wiring ---------------
+        const cfg = {
+            enable: '<?php echo isset($pt->config->avdb_cron_enable) ? $pt->config->avdb_cron_enable : 'off'; ?>',
+            secret: '<?php echo isset($pt->config->avdb_cron_secret) ? $pt->config->avdb_cron_secret : ''; ?>',
+            apiUrl: '<?php echo isset($pt->config->avdb_cron_api_url) ? html_entity_decode($pt->config->avdb_cron_api_url, ENT_QUOTES, 'UTF-8') : 'https://avdbapi.com/api.php/provide/vod/?ac=detail&pg='; ?>',
+            pageFrom: '<?php echo isset($pt->config->avdb_cron_page_from) ? $pt->config->avdb_cron_page_from : '1'; ?>',
+            pageTo: '<?php echo isset($pt->config->avdb_cron_page_to) ? $pt->config->avdb_cron_page_to : '100'; ?>',
+            nextPage: '<?php echo isset($pt->config->avdb_cron_next_page) ? $pt->config->avdb_cron_next_page : '1'; ?>',
+            itemsPerRun: '<?php echo isset($pt->config->avdb_cron_items_per_run) ? $pt->config->avdb_cron_items_per_run : '25'; ?>',
+            delay: '<?php echo isset($pt->config->avdb_cron_rate_delay_ms) ? $pt->config->avdb_cron_rate_delay_ms : '0'; ?>',
+            minInterval: '<?php echo isset($pt->config->avdb_cron_min_interval_sec) ? $pt->config->avdb_cron_min_interval_sec : '300'; ?>',
+            maxLoad: '<?php echo isset($pt->config->avdb_cron_max_load) ? $pt->config->avdb_cron_max_load : '6'; ?>',
+            lockTtl: '<?php echo isset($pt->config->avdb_cron_lock_ttl) ? $pt->config->avdb_cron_lock_ttl : '600'; ?>',
+            ownerId: '<?php echo isset($pt->config->avdb_cron_user_id) ? $pt->config->avdb_cron_user_id : '1'; ?>',
+            siteUrl: '<?php echo $pt->config->site_url; ?>'
+        };
+        $('#cron-enable').val(cfg.enable);
+        // Auto-generate secret if empty
+        (function ensureSecret(){
+            let sec = cfg.secret || '';
+            if (!sec || sec === '[set-secret-first]') {
+                // 24 hex chars
+                const rand = () => Math.floor((1 + Math.random()) * 0x1000000).toString(16).padStart(6,'0');
+                sec = rand() + rand() + rand() + rand();
+                $('#cron-secret').val(sec);
+                cfg.secret = sec;
+                // Persist immediately so user doesn’t lose it on refresh
+                $.post('/aj/ap/save-settings', { avdb_cron_secret: sec }, function(){});
+            } else {
+                $('#cron-secret').val(sec);
+            }
+        })();
+        $('#cron-api-url').val(cfg.apiUrl);
+        $('#cron-page-from').val(cfg.pageFrom);
+        $('#cron-page-to').val(cfg.pageTo);
+        $('#cron-next-page').val(cfg.nextPage);
+        $('#cron-items-per-run').val(cfg.itemsPerRun);
+        $('#cron-delay').val(cfg.delay);
+        $('#cron-min-interval').val(cfg.minInterval);
+        $('#cron-max-load').val(cfg.maxLoad);
+        $('#cron-lock-ttl').val(cfg.lockTtl);
+        $('#cron-owner-id').val(cfg.ownerId);
+        $('#cron-url').text(cfg.siteUrl + '/cron-avdb.php?secret=' + ($('#cron-secret').val() || '[set-secret-first]'));
+
+        $('#save-cron').on('click', function() {
+            const payload = {
+                avdb_cron_enable: $('#cron-enable').val(),
+                avdb_cron_secret: $('#cron-secret').val(),
+                avdb_cron_api_url: $('#cron-api-url').val(),
+                avdb_cron_page_from: $('#cron-page-from').val(),
+                avdb_cron_page_to: $('#cron-page-to').val(),
+                avdb_cron_next_page: $('#cron-next-page').val(),
+                avdb_cron_items_per_run: $('#cron-items-per-run').val(),
+                avdb_cron_rate_delay_ms: $('#cron-delay').val(),
+                avdb_cron_min_interval_sec: $('#cron-min-interval').val(),
+                avdb_cron_max_load: $('#cron-max-load').val(),
+                avdb_cron_lock_ttl: $('#cron-lock-ttl').val(),
+                avdb_cron_user_id: $('#cron-owner-id').val(),
+            };
+            $('#cron-status').text('Saving...');
+            $.post('/aj/ap/save-settings', payload, function (data) {
+                if (data && data.status === 200) {
+                    $('#cron-status').text('Saved');
+                    $('#cron-url').text(cfg.siteUrl + '/cron-avdb.php?secret=' + ($('#cron-secret').val() || '[set-secret-first]'));
+                } else {
+                    $('#cron-status').text('Save failed');
+                }
+            }).fail(function(){ $('#cron-status').text('Save failed'); });
+        });
+
+        $('#run-cron').on('click', function() {
+            $('#cron-status').text('Running...');
+            const url = cfg.siteUrl + '/cron-avdb.php?secret=' + ($('#cron-secret').val() || cfg.secret);
+            fetch(url).then(r => r.json())
+                .then(j => { $('#cron-status').text('Done: ' + JSON.stringify(j)); })
+                .catch(() => { $('#cron-status').text('Run failed'); });
+        });
+
+        // Render simple how-to section
+        (function renderCronHowTo(){
+            var sUrl = $('#cron-url').text();
+            var lines = [];
+            lines.push('How to schedule this cron:');
+            lines.push('• Linux (crontab): */5 * * * * curl ' + sUrl + ' >/dev/null 2>&1');
+            lines.push('• Windows (Task Scheduler): run every 5 minutes: php C:\\path\\to\\site\\cron-avdb.php secret=' + ($('#cron-secret').val()||'YOUR_SECRET'));
+            lines.push('• Manual run: open ' + sUrl + ' in browser');
+            $('#cron-howto').html(lines.join('<br>'));
+        })();
+    });
+</script>
